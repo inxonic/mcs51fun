@@ -13,14 +13,14 @@
 #define WR_HIGH (PINC & _BV(6))
 
 
-#define set_data_input() do {\
+#define set_data_input_register_safe() do {\
     DDRB &= ~_BV(1); DDRB &= ~_BV(2); DDRB &= ~_BV(3); DDRB &= ~_BV(4);\
     DDRF &= ~_BV(4); DDRF &= ~_BV(5); DDRF &= ~_BV(6); DDRF &= ~_BV(7);\
   } while (0)
 
 #define set_data_output() do {\
-    DDRB |= _BV(1); DDRB |= _BV(2); DDRB |= _BV(3); DDRB |= _BV(4);\
-    DDRF |= _BV(4); DDRF |= _BV(5); DDRF |= _BV(6); DDRF |= _BV(7);\
+    DDRB |= 0x0f<<1;\
+    DDRF |= 0xf0;\
   } while (0)
 
 #define write_data(VALUE) do {\
@@ -39,13 +39,13 @@ uint8_t mcs51ram[2096];
 
 /* /PSEN rising edge */
 ISR(INT0_vect, ISR_NAKED) {
-  set_data_input();
+  set_data_input_register_safe();
   reti();
 }
 
 /* /RD rising edge */
 ISR(INT1_vect, ISR_NAKED) {
-  set_data_input();
+  set_data_input_register_safe();
   reti();
 }
 
