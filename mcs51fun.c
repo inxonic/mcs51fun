@@ -13,15 +13,25 @@
 #define WR_HIGH (PINC & _BV(6))
 
 
-#define set_data_input() do { DDRB &= ~_BV(1); DDRB &= ~_BV(2); DDRB &= ~_BV(3); DDRB &= ~_BV(4); DDRF &= ~_BV(4); DDRF &= ~_BV(5); DDRF &= ~_BV(6); DDRF &= ~_BV(7); } while (0)
+#define set_data_input() do {\
+    DDRB &= ~_BV(1); DDRB &= ~_BV(2); DDRB &= ~_BV(3); DDRB &= ~_BV(4);\
+    DDRF &= ~_BV(4); DDRF &= ~_BV(5); DDRF &= ~_BV(6); DDRF &= ~_BV(7);\
+  } while (0)
 
-#define set_data_output() do { DDRB |= _BV(1); DDRB |= _BV(2); DDRB |= _BV(3); DDRB |= _BV(4); DDRF |= _BV(4); DDRF |= _BV(5); DDRF |= _BV(6); DDRF |= _BV(7); } while (0)
+#define set_data_output() do {\
+    DDRB |= _BV(1); DDRB |= _BV(2); DDRB |= _BV(3); DDRB |= _BV(4);\
+    DDRF |= _BV(4); DDRF |= _BV(5); DDRF |= _BV(6); DDRF |= _BV(7);\
+  } while (0)
 
-#define write_data(VALUE) do { PORTB = PORTB & ~(0x0f<<1) | (VALUE & 0x0f)<<1; PORTF = PORTF & ~0xf0 | VALUE & 0xf0; } while (0)
+#define write_data(VALUE) do {\
+    PORTB = PORTB & ~(0x0f<<1) | (VALUE & 0x0f)<<1;\
+    PORTF = PORTF & ~0xf0 | VALUE & 0xf0;\
+  } while (0)
 
 #define read_data() (PINF & 0xf0 | (PINB>>1 & 0x0f))
 
-#define read_address_high() (PIND & _BV(7) ? PIND>>2 & 0x07 + 0x80 : PIND>>2 & 0x07)
+#define read_address_high() \
+  (PIND & _BV(7) ? PIND>>2 & 0x07 + 0x80 : PIND>>2 & 0x07)
 
 
 uint8_t mcs51ram[2096];
@@ -72,9 +82,6 @@ int main() {
 
   /* setup reset and clock pins */
   DDRB |= _BV(6) | _BV(5);
-
-  /* setup debug port */
-  DDRD |= _BV(7);
 
   /* setup clock */
   TCCR1A = _BV(COM1B0);
