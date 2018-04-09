@@ -4,7 +4,9 @@
 *.lk
 *.lst
 *.map
+*.mem
 *.noi
+*.rst
 *.sym
 *.elf
 *.o
