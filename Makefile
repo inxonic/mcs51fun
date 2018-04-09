@@ -8,10 +8,10 @@ MCU=		atmega32u4
 DPROG=		avr109
 DPORT=		/dev/ttyACM0
 
-ISP_TARGET=	8031.ihx
+ISP_TARGET=	mcs51fun.ihx
 
 TARGETS=	$(ISP_TARGET)
-OBJECTS=	mcs51rom.o 8031.o
+OBJECTS=	mcs51rom.o mcs51fun.o
 
 MCS51ROM=	mcs51code/hello.ihx
 
@@ -30,9 +30,9 @@ AVRDUDEFLAGS=	-p $(MCU) -c $(DPROG) -P $(DPORT)
 all:		$(TARGETS)
 
 
-8031.elf:	$(OBJECTS)
+mcs51fun.elf:	$(OBJECTS)
 
-8031.o:		mcs51rom.h
+mcs51fun.o:	mcs51rom.h
 
 $(MCS51ROM):
 		$(error missing $(MCS51ROM))
