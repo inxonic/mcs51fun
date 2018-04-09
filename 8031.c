@@ -1,8 +1,11 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/pgmspace.h>
 
 #define F_CPU 8000000UL
 #include <util/delay.h>
+
+#include "mcs51rom.h"
 
 
 #define PSEN_HIGH (PIND & _BV(0))
@@ -10,42 +13,30 @@
 #define WR_HIGH (PINC & _BV(6))
 
 
-#define DEBUG_0 { PORTD &= ~_BV(7); }
-#define DEBUG_1 { PORTD |= _BV(7); }
+#define set_data_input() do { DDRB &= ~_BV(1); DDRB &= ~_BV(2); DDRB &= ~_BV(3); DDRB &= ~_BV(4); DDRF &= ~_BV(4); DDRF &= ~_BV(5); DDRF &= ~_BV(6); DDRF &= ~_BV(7); } while (0)
+
+#define set_data_output() do { DDRB |= _BV(1); DDRB |= _BV(2); DDRB |= _BV(3); DDRB |= _BV(4); DDRF |= _BV(4); DDRF |= _BV(5); DDRF |= _BV(6); DDRF |= _BV(7); } while (0)
+
+#define write_data(VALUE) do { PORTB = PORTB & ~(0x0f<<1) | (VALUE & 0x0f)<<1; PORTF = PORTF & ~0xf0 | VALUE & 0xf0; } while (0)
+
+#define read_data() (PINF & 0xf0 | (PINB>>1 & 0x0f))
+
+#define read_address_high() (PIND & _BV(7) ? PIND>>2 & 0x07 + 0x80 : PIND>>2 & 0x07)
 
 
-static inline void set_data_input() {
-  DDRB &= ~0x1e;
-  DDRF &= ~0xf0;
-}
-
-static inline void set_data_output() {
-  DDRB |= 0x1e;
-  DDRF |= 0xf0;
-}
-
-static inline uint8_t read_data() {
-  return PINF & 0xf0 | (PINB>>1 & 0x0f);
-}
-
-static inline uint16_t read_address() {
-  return read_data();
-}
-
-static inline void write_data(uint8_t data) {
-  PORTB = PORTB & ~(0x0f<<1) | (data & 0x0f)<<1;
-  PORTF = PORTF & ~0xf0 | data & 0xf0;
-}
+uint8_t mcs51ram[2096];
 
 
 /* /PSEN rising edge */
-ISR(INT0_vect) {
+ISR(INT0_vect, ISR_NAKED) {
   set_data_input();
+  reti();
 }
 
 /* /RD rising edge */
-ISR(INT1_vect) {
+ISR(INT1_vect, ISR_NAKED) {
   set_data_input();
+  reti();
 }
 
 /* /ALE falling edge */
@@ -53,36 +44,22 @@ ISR(INT6_vect) {
   uint16_t address;
   uint8_t data;
 
-  address = read_address();
+  address = read_data() | read_address_high()<<8;
 
   for (;;) {
     if ( !PSEN_HIGH ) {
-      switch ( address & 0x3 ) {
-        case 0x00:
-          DEBUG_0;
-          data = 0xd2;
-          break;
-        case 0x02:
-          DEBUG_0;
-          data = 0xc2;
-          break;
-        case 0x01:
-        case 0x03:
-          DEBUG_1;
-          data = 0x90;
-          break;
-      }
-      write_data(data);
+      write_data(pgm_read_byte(&(mcs51rom[address])));
       set_data_output();
       break;
     }
     else if ( !RD_HIGH ) {
-      write_data(0x00);
+      write_data(mcs51ram[address]);
       set_data_output();
       break;
     }
     else if ( !WR_HIGH ) {
       data = read_data();
+      mcs51ram[address] = data;
       break;
     }
   }
@@ -91,7 +68,7 @@ ISR(INT6_vect) {
 
 int main() {
   /* activate reset */
-  PORTB |= _BV(6);
+  PORTB |= _BV(5);
 
   /* setup reset and clock pins */
   DDRB |= _BV(6) | _BV(5);
@@ -100,9 +77,9 @@ int main() {
   DDRD |= _BV(7);
 
   /* setup clock */
-  TCCR1A = _BV(COM1A0);
+  TCCR1A = _BV(COM1B0);
   TCCR1B = _BV(WGM12) | _BV(CS10);
-  OCR1A = 15 - 1;
+  OCR1A = 13 - 1;
 
   /* setup interrupts */
   EICRA = _BV(ISC11) | _BV(ISC10) | _BV(ISC01) | _BV(ISC00);
@@ -112,7 +89,8 @@ int main() {
 
   /* wait then deactivate reset */
   _delay_ms(500);
-  PORTB &= ~_BV(6);
+  PORTB &= ~_BV(5);
 
-  for (;;);
+  for (;;) {
+  }
 }

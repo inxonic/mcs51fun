@@ -14,3 +14,4 @@
 
 # editor temporary files
 .*.swp
+mcs51rom.h
