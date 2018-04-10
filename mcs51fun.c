@@ -34,6 +34,15 @@
   (PIND & _BV(7) ? PIND>>2 & 0x07 + 0x80 : PIND>>2 & 0x07)
 
 
+union address_t {
+  uint16_t address;
+  struct {
+    uint8_t lo;
+    uint8_t hi;
+  } bytes;
+};
+
+
 uint8_t mcs51ram[2096];
 
 
@@ -51,25 +60,26 @@ ISR(INT1_vect, ISR_NAKED) {
 
 /* /ALE falling edge */
 ISR(INT6_vect) {
-  uint16_t address;
+  union address_t address;
   uint8_t data;
 
-  address = read_data() | read_address_high()<<8;
+  address.bytes.lo = read_data();
+  address.bytes.hi = read_address_high();
 
   for (;;) {
     if ( !PSEN_HIGH ) {
-      write_data(pgm_read_byte(&(mcs51rom[address])));
+      write_data(pgm_read_byte(&(mcs51rom[address.address])));
       set_data_output();
       break;
     }
     else if ( !RD_HIGH ) {
-      write_data(mcs51ram[address]);
+      write_data(mcs51ram[address.address]);
       set_data_output();
       break;
     }
     else if ( !WR_HIGH ) {
       data = read_data();
-      mcs51ram[address] = data;
+      mcs51ram[address.address] = data;
       break;
     }
   }
