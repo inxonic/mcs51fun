@@ -31,7 +31,7 @@
 #define read_data() (PINF & 0xf0 | (PINB>>1 & 0x0f))
 
 #define read_address_high() \
-  (PIND & _BV(7) ? PIND>>2 & 0x07 + 0x80 : PIND>>2 & 0x07)
+  ((PIND & _BV(7) ? 0x8 : 0x0) | PIND>>2 & 0x07)
 
 
 union address_t {
